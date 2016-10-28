@@ -18,7 +18,10 @@ def importAndClean():
     # Drop any columns with NaNs
     df_to_train = df_to_train.dropna(axis=1, how='any')
     df_to_test = df_to_test.dropna(axis=1, how='any')
-
+    
+    # Reshape df_to_test to have same # of cols as train set
+    lst = [x for x in df_to_test.columns.values if x not in df_to_train.columns.values]
+    df_to_test = df_to_test.drop(lst, axis=1)
 
     x_train = df_to_train.values
     y_train = df['Q34'].values
@@ -30,11 +33,10 @@ def importAndClean():
 
 def applyClassifier(type,x,y,x_test):
     # Fit and Predict on New Data
-    # In this case, predicting on training data b/c test_data has different dimensions for now...
     if type == 'multiclass':
-        pred = OneVsRestClassifier(LinearSVC(random_state=0)).fit(x, y).predict(x)
+        pred = OneVsRestClassifier(LinearSVC(random_state=0)).fit(x, y).predict(x_test)
     elif type == 'forest':
-        pred = RandomForestClassifier(n_estimators=10, max_depth=None, random_state=0).fit(x,y).predict(x)
+        pred = RandomForestClassifier(n_estimators=10, max_depth=None, random_state=0).fit(x,y).predict(x_test)
 
     return pred
 
@@ -43,8 +45,8 @@ def main():
     pred_mc = applyClassifier('multiclass', x_train, y_train, x_test)
     pred_rf = applyClassifier('forest', x_train, y_train, x_test)
     
-    print("Classifier Accuracy: %.2f" % np.mean(y_train == pred_mc))
-    print("Classifier Accuracy: %.2f" % np.mean(y_train == pred_rf))
+    print("Classifier Accuracy: %.2f" % np.mean(y_test == pred_mc))
+    print("Classifier Accuracy: %.2f" % np.mean(y_test == pred_rf))
 
 if __name__ == "__main__":
     main()
